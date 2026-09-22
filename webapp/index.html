@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LSteven Cockpit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Fira+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 24 24" fill="none"><path d="M3 17l6-6 4 4 8-8M21 7v6M21 7h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>LSteven Cockpit</span>
+    </div>
+
+    <nav class="tabs" role="tablist" aria-label="Điều hướng chính">
+      <button class="tab active" data-tab="dashboard" role="tab" aria-selected="true">Dashboard</button>
+      <button class="tab" data-tab="journal" role="tab" aria-selected="false">Nhật ký</button>
+      <button class="tab" data-tab="process" role="tab" aria-selected="false">Quy trình</button>
+    </nav>
+
+    <div class="topbar-right">
+      <span class="server-clock" id="serverClock">--:--:--</span>
+    </div>
+  </div>
+</header>
+
+<main class="shell">
+
+  <!-- ============================= DASHBOARD ============================= -->
+  <section id="panel-dashboard" class="panel active">
+
+    <div class="controlbar">
+      <div class="symbol-field">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M8 12h8M12 8v8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <input id="symbolInput" type="text" value="BTCUSDT" spellcheck="false" aria-label="Symbol giao dịch">
+      </div>
+      <button id="refreshBtn" class="btn-ghost" aria-label="Làm mới dữ liệu">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 4v5h5M20 20v-5h-5M4.5 15a8 8 0 0013.9 3M19.5 9A8 8 0 005.6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Làm mới
+      </button>
+      <span id="updatedAgo" class="updated-ago">—</span>
+    </div>
+
+    <!-- summary banner -->
+    <div id="summaryBanner" class="summary-banner">
+      <div class="skeleton-line" style="width:70%"></div>
+    </div>
+
+    <!-- 7-timeframe strip -->
+    <section aria-labelledby="tf-heading">
+      <div class="section-head">
+        <h2 id="tf-heading">Bối cảnh đa khung</h2>
+        <span class="lesson-tag">Bài 20 · bước 1</span>
+      </div>
+      <div id="tfStrip" class="tf-strip"></div>
+    </section>
+
+    <!-- signals + calculator -->
+    <div class="split-grid">
+      <section aria-labelledby="signals-heading" class="card">
+        <div class="section-head compact">
+          <h2 id="signals-heading">Tín hiệu gần nhất</h2>
+          <select id="signalTf" class="tf-select" aria-label="Chọn khung xem tín hiệu">
+            <option>H1</option><option>H4</option><option>H12</option>
+            <option selected>D</option><option>3D</option><option>W</option><option>M</option>
+          </select>
+        </div>
+        <div class="signal-columns">
+          <div>
+            <h3 class="signal-sub">Form <span class="lesson-tag inline">Bài 4</span></h3>
+            <ul id="formList" class="timeline"></ul>
+          </div>
+          <div>
+            <h3 class="signal-sub">Trap <span class="lesson-tag inline">Bài 10–11</span></h3>
+            <ul id="trapList" class="timeline"></ul>
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="calc-heading" class="card calc-card">
+        <div class="section-head compact">
+          <h2 id="calc-heading">Khối lượng 2%</h2>
+          <span class="lesson-tag">Bài 17</span>
+        </div>
+        <div class="calc-grid">
+          <label>Vốn (USD)
+            <input id="calcEquity" type="number" value="1000" min="0" step="10">
+          </label>
+          <label>% rủi ro
+            <input id="calcRisk" type="number" value="2" min="0.1" max="10" step="0.1">
+          </label>
+          <label>Giá vào
+            <input id="calcEntry" type="number" value="0" min="0" step="0.01">
+          </label>
+          <label>Giá SL
+            <input id="calcSl" type="number" value="0" min="0" step="0.01">
+          </label>
+        </div>
+        <div id="calcResult" class="calc-result empty">Nhập giá vào &amp; SL để tính</div>
+      </section>
+    </div>
+  </section>
+
+  <!-- ============================= JOURNAL ============================= -->
+  <section id="panel-journal" class="panel">
+    <div class="section-head">
+      <h2>Nhật ký giao dịch</h2>
+      <span class="lesson-tag">Bài 20 · ghi trước khi vào</span>
+    </div>
+
+    <div id="journalStats" class="stat-row"></div>
+
+    <button id="newTradeBtn" class="btn-primary" style="margin:20px 0">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      Thêm lệnh mới
+    </button>
+
+    <form id="tradeForm" class="card trade-form hidden">
+      <div class="form-grid">
+        <label>Symbol <input name="symbol" value="BTCUSDT" required></label>
+        <label>Khung chơi
+          <select name="khung_choi">
+            <option>H1</option><option>H4</option><option>H12</option>
+            <option selected>D</option><option>3D</option><option>W</option><option>M</option>
+          </select>
+        </label>
+        <label>Hướng
+          <select name="huong"><option value="long">long</option><option value="short">short</option></select>
+        </label>
+        <label>Giá vào <input name="entry_price" type="number" step="0.01"></label>
+        <label>Giá SL <input name="sl_price" type="number" step="0.01"></label>
+        <label>Khối lượng (USD) <input name="khoi_luong_usd" type="number" step="0.01"></label>
+      </div>
+      <label class="full">Bối cảnh đa khung <textarea name="boi_canh_da_khung" rows="2" placeholder="Dán tóm tắt từ Dashboard"></textarea></label>
+      <label class="full">Lý do vào <input name="ly_do" placeholder="Form gì / khung nào / trap gì"></label>
+      <label class="full">Ghi chú <input name="ghi_chu"></label>
+      <div class="form-actions">
+        <button type="submit" class="btn-primary">Lưu lệnh</button>
+        <button type="button" id="cancelTradeBtn" class="btn-ghost">Huỷ</button>
+      </div>
+    </form>
+
+    <div id="tradeList" class="trade-list"></div>
+  </section>
+
+  <!-- ============================= PROCESS ============================= -->
+  <section id="panel-process" class="panel">
+    <div class="section-head">
+      <h2>Quy trình 8 bước</h2>
+      <span class="lesson-tag">Bài 20 · Phụ lục B</span>
+    </div>
+    <p class="muted-p">Tự động reset mỗi ngày mới — tick lại từ đầu cho mỗi kế hoạch, đừng mang trạng thái tick hôm qua sang hôm nay.</p>
+    <ol id="processList" class="process-list"></ol>
+  </section>
+
+</main>
+
+<script src="/assets/app.js"></script>
+</body>
+</html>
