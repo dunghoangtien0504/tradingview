@@ -1,0 +1,24 @@
+[project]
+name = "lsteven-mcp"
+version = "0.1.0"
+description = "MCP server reading BTC/crypto with the LSteven RSI(14)+EMA9+WMA45 multi-timeframe method (Form/Trap detection)."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+  "mcp[cli]>=1.14.0,<2",
+  "pandas>=2",
+  "numpy>=1.26",
+  "requests>=2.32",
+]
+
+[project.scripts]
+lsteven-mcp = "lsteven_mcp.server:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["lsteven_mcp*"]
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"

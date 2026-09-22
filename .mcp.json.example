@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "lsteven-trading": {
+      "command": "python",
+      "args": ["-m", "lsteven_mcp.server"]
+    }
+  }
+}
