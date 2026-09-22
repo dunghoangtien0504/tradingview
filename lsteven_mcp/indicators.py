@@ -50,51 +50,54 @@ def add_lines(df: pd.DataFrame, rsi_len: int = 14, ema_len: int = 9, wma_len: in
 def muc_luc(rsi: float, ema9: float, wma45: float) -> int:
     """Strength scale 1-6 (Bai 4): higher = buyers more in control.
 
-    Operationalisation (see module docstring): position of RSI relative to
-    EMA9/WMA45, and whether each line already cleared the 45 boundary.
-        6: RSI > EMA9 > WMA45, all three above 45      (fully bullish, mature)
-        5: RSI > EMA9 > WMA45, but WMA45 still <= 45    (bullish, still forming)
-        4: RSI > EMA9, RSI <= WMA45                     (early bullish: diem 1-2)
-        3: RSI <= EMA9, RSI > WMA45                      (early bearish: diem 1-2)
-        2: RSI <= EMA9 <= WMA45, but WMA45 still > 45    (bearish, still forming)
-        1: RSI <= EMA9 <= WMA45, all three <= 45         (fully bearish, mature)
+    Purely the RELATIVE ORDER of the three lines, which is exactly how the
+    book describes it ("vi tri tuong quan cua ba duong"). Deliberately does
+    NOT test RSI against the number 45: in the source, "duong 45" is the
+    WMA45 line itself (the same sentence calls it "duong WMA45 (do)" and
+    "duong 45"), not the numeric RSI level 45.
+
+        6: RSI > EMA9 > WMA45     (full bullish stack)
+        5: RSI > EMA9, EMA9 <= WMA45  (RSI leading, EMA9 hasn't cleared red)
+        4: RSI > WMA45, RSI <= EMA9   (pullback inside a bullish read)
+        3: RSI <= WMA45, RSI > EMA9   (bounce inside a bearish read)
+        2: RSI <= EMA9, EMA9 > WMA45  (bearish forming)
+        1: RSI <= EMA9 <= WMA45   (full bearish stack)
     """
     if any(pd.isna(v) for v in (rsi, ema9, wma45)):
         return 0
-    if rsi > ema9 >= wma45 or (rsi > ema9 and ema9 > wma45):
-        return 6 if (rsi > 45 and wma45 > 45) else 5
     if rsi > ema9:
+        return 6 if ema9 > wma45 else 5
+    # rsi <= ema9
+    if rsi > wma45:
         return 4
-    if rsi <= ema9 and rsi > wma45:
-        return 3
-    if wma45 > 45:
+    if ema9 > wma45:
         return 2
-    return 1
+    return 1 if rsi <= ema9 else 3
 
 
-def mat_can_bang(rsi_series: pd.Series, lookback: int = 30) -> dict:
-    """Imbalance read (Bai 9): RSI parked on one side of 45 for a long time
-    with no return trip is a real, quotable pattern in the source ("BTC 2022
-    bottom: RSI W stuck 31-37 for ~4 months"). This just measures how long
-    and how far RSI has stayed on its current side of 45 over `lookback`
-    candles — it is a magnitude/duration read, not a trap (trap needs the
-    20/80 threshold, see form_trap.py).
+def mat_can_bang(df: pd.DataFrame, lookback: int = 60) -> dict:
+    """Imbalance read (Bai 9): RSI parked on one side of the WMA45 line for a
+    long time with no return trip. The book is explicit that this is measured
+    against "duong 45" — i.e. the WMA45 line, not the price and not the
+    numeric RSI level 45.
     """
-    s = rsi_series.dropna().tail(lookback)
-    if len(s) < 5:
-        return {"side": None, "candles_on_side": 0, "mean_distance_from_45": None}
-    side = "above" if s.iloc[-1] >= 45 else "below"
-    on_side = (s >= 45) if side == "above" else (s < 45)
-    # count the currently-running streak from the end
+    sub = df[["rsi", "wma45"]].dropna().tail(lookback)
+    if len(sub) < 5:
+        return {"side": None, "candles_on_side": 0, "mean_distance": None}
+
+    above = sub["rsi"] > sub["wma45"]
+    side = "above" if bool(above.iloc[-1]) else "below"
+    on_side = above if side == "above" else ~above
+
     streak = 0
     for v in on_side.iloc[::-1]:
         if v:
             streak += 1
         else:
             break
-    recent = s.tail(streak) if streak else s.tail(1)
+    recent = sub.tail(streak) if streak else sub.tail(1)
     return {
         "side": side,
         "candles_on_side": int(streak),
-        "mean_distance_from_45": round(float((recent - 45).abs().mean()), 2),
+        "mean_distance": round(float((recent["rsi"] - recent["wma45"]).abs().mean()), 2),
     }

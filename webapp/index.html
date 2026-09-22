@@ -5,84 +5,112 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>LSteven Cockpit</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Fira+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Be+Vietnam+Pro:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/styles.css">
 </head>
 <body>
+<div class="bg-grid" aria-hidden="true"></div>
+<div class="bg-glow bg-glow-a" aria-hidden="true"></div>
+<div class="bg-glow bg-glow-b" aria-hidden="true"></div>
 
 <header class="topbar">
   <div class="topbar-inner">
     <div class="brand">
-      <svg class="brand-mark" viewBox="0 0 24 24" fill="none"><path d="M3 17l6-6 4 4 8-8M21 7v6M21 7h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <span>LSteven Cockpit</span>
+      <svg class="brand-mark" viewBox="0 0 24 24" fill="none"><path d="M3 17l6-6 4 4 8-8M21 7v6M21 7h-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>LSTEVEN<b>COCKPIT</b></span>
     </div>
 
     <nav class="tabs" role="tablist" aria-label="Điều hướng chính">
-      <button class="tab active" data-tab="dashboard" role="tab" aria-selected="true">Dashboard</button>
+      <button class="tab active" data-tab="dashboard" role="tab" aria-selected="true">Bảng điều khiển</button>
       <button class="tab" data-tab="journal" role="tab" aria-selected="false">Nhật ký</button>
       <button class="tab" data-tab="process" role="tab" aria-selected="false">Quy trình</button>
     </nav>
 
     <div class="topbar-right">
-      <span class="server-clock" id="serverClock">--:--:--</span>
+      <span class="live-dot" aria-hidden="true"></span>
+      <span class="server-clock mono" id="serverClock">--:--:--</span>
     </div>
   </div>
 </header>
 
 <main class="shell">
 
-  <!-- ============================= DASHBOARD ============================= -->
+  <!-- ============================ DASHBOARD ============================ -->
   <section id="panel-dashboard" class="panel active">
 
     <div class="controlbar">
       <div class="symbol-field">
-        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M8 12h8M12 8v8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         <input id="symbolInput" type="text" value="BTCUSDT" spellcheck="false" aria-label="Symbol giao dịch">
       </div>
       <button id="refreshBtn" class="btn-ghost" aria-label="Làm mới dữ liệu">
         <svg viewBox="0 0 24 24" fill="none"><path d="M4 4v5h5M20 20v-5h-5M4.5 15a8 8 0 0013.9 3M19.5 9A8 8 0 005.6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        Làm mới
+        <span>Làm mới</span>
       </button>
-      <span id="updatedAgo" class="updated-ago">—</span>
+      <span id="updatedAgo" class="updated-ago mono">—</span>
     </div>
 
-    <!-- hero -->
-    <section class="hero">
-      <div class="hero-glow" aria-hidden="true"></div>
-      <div class="hero-top">
-        <div class="hero-price-block">
-          <span class="hero-eyebrow" id="heroSymbolLabel">BTCUSDT · Daily</span>
-          <div class="hero-price" id="heroPrice"><div class="skeleton-line" style="width:220px;height:44px"></div></div>
-          <div class="hero-change" id="heroChange"></div>
-        </div>
-        <div class="hero-gauge-block">
-          <div id="heroGauge" class="gauge-wrap"></div>
-          <span class="hero-gauge-label">Mức lực Daily <span class="lesson-tag inline">Bài 4</span></span>
-        </div>
+    <!-- HERO -->
+    <section class="hero panel-hud">
+      <div class="hero-left">
+        <span class="eyebrow" id="heroSymbolLabel">BTCUSDT · DAILY</span>
+        <div class="hero-price mono" id="heroPrice">—</div>
+        <div class="hero-change mono" id="heroChange"></div>
+        <div class="hero-sub" id="heroSub"></div>
       </div>
-      <div id="summaryBanner" class="summary-banner">
-        <div class="skeleton-line" style="width:70%"></div>
+      <div class="hero-right">
+        <div id="heroGauge" class="gauge-wrap"></div>
+        <span class="hero-gauge-label">MỨC LỰC · DAILY</span>
+      </div>
+      <div class="hero-verdict" id="summaryBanner">
+        <div class="skeleton-line" style="width:60%"></div>
       </div>
     </section>
 
-    <!-- 7-timeframe strip -->
-    <section aria-labelledby="tf-heading">
+    <!-- MA TRAN DA KHUNG -->
+    <section aria-labelledby="matrix-heading">
       <div class="section-head">
-        <h2 id="tf-heading">Bối cảnh đa khung</h2>
+        <h2 id="matrix-heading">Ma trận đa khung</h2>
         <span class="lesson-tag">Bài 20 · bước 1</span>
+        <span class="head-note" id="matrixNote"></span>
       </div>
-      <div id="tfStrip" class="tf-strip"></div>
+
+      <div class="chain" id="dongThuanChain" aria-label="Chuỗi đồng thuận giữa các khung liền kề"></div>
+
+      <div class="matrix-wrap">
+        <table class="matrix" id="matrixTable">
+          <thead>
+            <tr>
+              <th class="col-tf">Khung</th>
+              <th>Đọc</th>
+              <th class="num">RSI</th>
+              <th class="num hide-sm">EMA9</th>
+              <th class="num hide-sm">WMA45</th>
+              <th>Lực</th>
+              <th class="hide-sm">Hình 3 đường</th>
+              <th>Giai đoạn</th>
+              <th class="hide-sm">Nến đóng sau</th>
+              <th aria-label="Mở rộng"></th>
+            </tr>
+          </thead>
+          <tbody id="matrixBody"></tbody>
+        </table>
+      </div>
+      <p class="matrix-legend">
+        <span><i class="sw sw-rsi"></i>RSI</span>
+        <span><i class="sw sw-ema"></i>EMA9</span>
+        <span><i class="sw sw-wma"></i>WMA45</span>
+        <span class="legend-note">Bấm vào một dòng để xem kịch bản xác nhận / huỷ của khung đó</span>
+      </p>
     </section>
 
-    <!-- signals + calculator -->
+    <!-- SIGNALS + CALC -->
     <div class="split-grid">
-      <section aria-labelledby="signals-heading" class="card">
+      <section aria-labelledby="signals-heading" class="card panel-hud">
         <div class="section-head compact">
           <h2 id="signals-heading">Tín hiệu gần nhất</h2>
-          <select id="signalTf" class="tf-select" aria-label="Chọn khung xem tín hiệu">
-            <option>H1</option><option>H4</option><option>H12</option>
-            <option selected>D</option><option>3D</option><option>W</option><option>M</option>
-          </select>
+          <select id="signalTf" class="tf-select mono" aria-label="Chọn khung xem tín hiệu"></select>
         </div>
         <div class="signal-columns">
           <div>
@@ -96,24 +124,16 @@
         </div>
       </section>
 
-      <section aria-labelledby="calc-heading" class="card calc-card">
+      <section aria-labelledby="calc-heading" class="card panel-hud calc-card">
         <div class="section-head compact">
           <h2 id="calc-heading">Khối lượng 2%</h2>
           <span class="lesson-tag">Bài 17</span>
         </div>
         <div class="calc-grid">
-          <label>Vốn (USD)
-            <input id="calcEquity" type="number" value="1000" min="0" step="10">
-          </label>
-          <label>% rủi ro
-            <input id="calcRisk" type="number" value="2" min="0.1" max="10" step="0.1">
-          </label>
-          <label>Giá vào
-            <input id="calcEntry" type="number" value="0" min="0" step="0.01">
-          </label>
-          <label>Giá SL
-            <input id="calcSl" type="number" value="0" min="0" step="0.01">
-          </label>
+          <label>Vốn (USD)<input id="calcEquity" class="mono" type="number" value="1000" min="0" step="10"></label>
+          <label>% rủi ro<input id="calcRisk" class="mono" type="number" value="2" min="0.1" max="10" step="0.1"></label>
+          <label>Giá vào<input id="calcEntry" class="mono" type="number" value="0" min="0" step="0.01"></label>
+          <label>Giá SL<input id="calcSl" class="mono" type="number" value="0" min="0" step="0.01"></label>
         </div>
         <div id="calcResult" class="calc-result empty">Nhập giá vào &amp; SL để tính</div>
       </section>
@@ -126,31 +146,26 @@
       <h2>Nhật ký giao dịch</h2>
       <span class="lesson-tag">Bài 20 · ghi trước khi vào</span>
     </div>
-
     <div id="journalStats" class="stat-row"></div>
 
     <button id="newTradeBtn" class="btn-primary" style="margin:20px 0">
-      <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
       Thêm lệnh mới
     </button>
 
-    <form id="tradeForm" class="card trade-form hidden">
+    <form id="tradeForm" class="card panel-hud trade-form hidden">
       <div class="form-grid">
         <label>Symbol <input name="symbol" value="BTCUSDT" required></label>
-        <label>Khung chơi
-          <select name="khung_choi">
-            <option>H1</option><option>H4</option><option>H12</option>
-            <option selected>D</option><option>3D</option><option>W</option><option>M</option>
-          </select>
-        </label>
-        <label>Hướng
-          <select name="huong"><option value="long">long</option><option value="short">short</option></select>
-        </label>
-        <label>Giá vào <input name="entry_price" type="number" step="0.01"></label>
-        <label>Giá SL <input name="sl_price" type="number" step="0.01"></label>
-        <label>Khối lượng (USD) <input name="khoi_luong_usd" type="number" step="0.01"></label>
+        <label>Khung chơi <select name="khung_choi" id="tradeKhung"></select></label>
+        <label>Hướng <select name="huong"><option value="long">long</option><option value="short">short</option></select></label>
+        <label>Giá vào <input name="entry_price" class="mono" type="number" step="0.01"></label>
+        <label>Giá SL <input name="sl_price" class="mono" type="number" step="0.01"></label>
+        <label>Khối lượng (USD) <input name="khoi_luong_usd" class="mono" type="number" step="0.01"></label>
       </div>
-      <label class="full">Bối cảnh đa khung <textarea name="boi_canh_da_khung" rows="2" placeholder="Dán tóm tắt từ Dashboard"></textarea></label>
+      <label class="full">Bối cảnh đa khung
+        <textarea name="boi_canh_da_khung" rows="2" placeholder="Bấm nút bên dưới để chèn bối cảnh hiện tại"></textarea>
+      </label>
+      <button type="button" id="fillContextBtn" class="btn-ghost small">Chèn bối cảnh từ Bảng điều khiển</button>
       <label class="full">Lý do vào <input name="ly_do" placeholder="Form gì / khung nào / trap gì"></label>
       <label class="full">Ghi chú <input name="ghi_chu"></label>
       <div class="form-actions">
@@ -168,7 +183,7 @@
       <h2>Quy trình 8 bước</h2>
       <span class="lesson-tag">Bài 20 · Phụ lục B</span>
     </div>
-    <p class="muted-p">Tự động reset mỗi ngày mới — tick lại từ đầu cho mỗi kế hoạch, đừng mang trạng thái tick hôm qua sang hôm nay.</p>
+    <p class="muted-p">Tự reset mỗi ngày mới — tick lại từ đầu cho mỗi kế hoạch, đừng mang trạng thái hôm qua sang hôm nay.</p>
     <ol id="processList" class="process-list"></ol>
   </section>
 

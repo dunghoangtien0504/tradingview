@@ -28,8 +28,10 @@ STATIC_DIR = Path(__file__).resolve().parent / "webapp"
 
 # Khung -> do dai 1 nen, dung de tinh dem nguoc toi luc dong nen tiep theo.
 _TF_SECONDS = {
-    "H1": 3600, "H4": 4 * 3600, "H12": 12 * 3600,
-    "D": 24 * 3600, "3D": 3 * 24 * 3600, "W": 7 * 24 * 3600,
+    "H1": 3600, "H2": 2 * 3600, "H3": 3 * 3600, "H4": 4 * 3600,
+    "H6": 6 * 3600, "H12": 12 * 3600,
+    "D": 24 * 3600, "2D": 2 * 24 * 3600, "3D": 3 * 24 * 3600, "4D": 4 * 24 * 3600,
+    "W": 7 * 24 * 3600,
     "M": None,  # thang khong co do dai co dinh, xu ly rieng
 }
 

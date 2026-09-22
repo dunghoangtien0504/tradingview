@@ -1,6 +1,6 @@
 # lsteven-mcp
 
-MCP server đọc BTC/crypto đúng bộ chỉ báo trong **Phương pháp giao dịch BTC theo xu hướng đa khung (LSteven)**: RSI(14) Wilder + EMA9 và WMA45 tính **trên chính RSI** (không phải trên giá), đọc theo bộ khung cố định `H1 · H4 · H12 · D · 3D · W · M`, có phát hiện **Form buy/sell** (Bài 4) và **Trap** (Bài 10–11: xuất hiện / trả trap thành công / trả trap không thành công / hỏng trap).
+MCP server đọc BTC/crypto đúng bộ chỉ báo trong **Phương pháp giao dịch BTC theo xu hướng đa khung (LSteven)**: RSI(14) Wilder + EMA9 và WMA45 tính **trên chính RSI** (không phải trên giá), đọc theo **12 khung**: bộ gốc của phương pháp `H1 · H4 · H12 · D · 3D · W · M` cộng 5 khung mở rộng `H2 · H3 · H6 · 2D · 4D` (được đánh dấu riêng trong giao diện, vì Bài 6 nói rõ bộ gốc cố tình bỏ các khung lẻ ở giữa), có phát hiện **Form buy/sell** (Bài 4) và **Trap** (Bài 10–11: xuất hiện / trả trap thành công / trả trap không thành công / hỏng trap).
 
 Dữ liệu lấy trực tiếp từ **Binance public REST API** (không cần API key). Không đặt lệnh, không kết nối sàn — đây thuần là công cụ đọc chart hỗ trợ quyết định, **không phải lời khuyên đầu tư**.
 
@@ -31,7 +31,7 @@ Thêm vào `.mcp.json` ở gốc project (đã có sẵn file mẫu, xem `../.mc
 
 | Tool | Việc gì | Khớp bài nào |
 |---|---|---|
-| `multi_timeframe_snapshot(symbol)` | Đọc cả 7 khung một lượt: giá, RSI/EMA9/WMA45, trên/dưới 45, mức lực 1-6, mất cân bằng, có đang trap không, bảng đồng thuận giữa các khung liền kề | Bài 6, 8, 9, 20 bước 1 |
+| `multi_timeframe_snapshot(symbol)` | Đọc cả 12 khung một lượt (tải song song): giá, RSI/EMA9/WMA45, RSI trên/dưới đường WMA45, mức lực 1-6, mất cân bằng, trap, nhận định + kịch bản xác nhận/huỷ, bảng đồng thuận giữa các khung liền kề | Bài 6, 8, 9, 20 bước 1 |
 | `get_indicator_series(symbol, timeframe, limit)` | Chuỗi RSI/EMA9/WMA45 + giá gần nhất của 1 khung, để tự vẽ hoặc kiểm tra tay | Bài 3 |
 | `detect_form_events(symbol, timeframe, lookback)` | Các form buy/sell gần đây, kèm điểm 1-2-3 | Bài 4 |
 | `detect_trap_events(symbol, timeframe, lookback)` | Các đợt Trap gần đây và cách kết thúc | Bài 10-11 |
@@ -43,6 +43,16 @@ Thêm vào `.mcp.json` ở gốc project (đã có sẵn file mẫu, xem `../.mc
 - **`muc_luc` (1-6) và `mất cân bằng`** là cách vận hành hoá của người viết cho một mô tả *định tính* trong sách (sách không cho công thức số cụ thể) — xem docstring trong `indicators.py`. Coi là gợi ý, không phải chân lý.
 - **`detect_trap_events`** dùng một ngưỡng heuristic ("WMA45 còn cách RSI ≥15 điểm khi RSI chạm 70/30 thì tính là hỏng") để phân biệt *trả trap* và *hỏng trap* — khớp với mọi ví dụ thật đã kiểm chứng tay (COVID crash 2020, đáy 06/2026…) nhưng vẫn là một xấp xỉ, không phải luật tuyệt đối. Sách cũng nói rõ ranh giới này "chỉ biết là một khoảng, không tuyệt đối".
 - Đây **không phải** hệ thống tự động vào/ra lệnh. Nó chỉ trả lời "chart đang nói gì" — quyết định vào lệnh, khối lượng, dừng lỗ vẫn theo kỷ luật ở Bài 15-17 của giáo trình.
+
+## Nhận định theo từng khung (`assess.py`)
+
+Mỗi khung có một khối nhận định gồm: **đọc lên/xuống/chờ**, **giai đoạn** (mới đi / nửa đường / gần cuối / ba đường chụm), **điều kiện xác nhận đi tiếp**, **điều kiện huỷ**, và **lưu ý**.
+
+Đây **không phải dự báo giá**. Bài 1 nói thẳng "không bao giờ đoán trước giá sẽ đi đến đâu", nên module này chỉ trả về đúng thứ phương pháp cho phép nói: hiện đang đọc là gì, và điều kiện nào xác nhận/huỷ cách đọc đó — đúng khuôn kế hoạch điều kiện của Bài 20.
+
+### Khung tự dựng (3h, 2D, 4D)
+
+Binance **không** phục vụ 3 khung này (`Invalid interval`), nên chúng được ghép từ nến 1h/1D. Mốc chia nến neo theo epoch bằng phép chia nguyên — không dùng `resample(origin=...)` của pandas vì tham số đó bị bỏ qua với rule theo ngày, khiến biên nến trôi theo lượng dữ liệu tải về. Đã đối chiếu: nến 2D tự ghép khớp chính xác OHLC của 2 nến D gốc.
 
 ## Bot cảnh báo Telegram (Lớp 2 — thuần đọc, không đặt lệnh)
 
