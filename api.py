@@ -84,13 +84,34 @@ def api_signals(symbol: str = "BTCUSDT", timeframe: str = "D"):
     df = add_lines(raw)
     forms = detect_forms(df, lookback=200)[-10:][::-1]
     traps = detect_traps(df, lookback=300)[-10:][::-1]
-    return {
-        "forms": [{"direction": f.direction, "diem3_time": f.diem3_time,
-                    "diem3_rsi": round(f.diem3_rsi, 1)} for f in forms],
-        "traps": [{"direction": t.direction, "start_time": t.start_time,
-                    "status": t.status, "extreme_rsi": round(t.extreme_rsi, 1),
-                    "detail": t.detail} for t in traps],
-    }
+
+    # Gia va "cach day bao nhieu nen" tai thoi diem tin hieu — hai thu nay la
+    # thu quyet dinh mot tin hieu con dung duoc hay da di qua lau (Bai 15:
+    # "neu da qua xa thi vao vol nho hon, hoac bo qua cho song moi").
+    times = df["open_time"].astype(str).tolist()
+    idx = {t: i for i, t in enumerate(times)}
+    last_i = len(times) - 1
+    closes = df["close"].tolist()
+
+    def at(t: str):
+        i = idx.get(t)
+        if i is None:
+            return None, None
+        return round(float(closes[i]), 2), last_i - i
+
+    out_forms = []
+    for f in forms:
+        price, ago = at(f.diem3_time)
+        out_forms.append({"direction": f.direction, "diem3_time": f.diem3_time,
+                          "diem3_rsi": round(f.diem3_rsi, 1),
+                          "price": price, "bars_ago": ago})
+    out_traps = []
+    for t in traps:
+        price, ago = at(t.start_time)
+        out_traps.append({"direction": t.direction, "start_time": t.start_time,
+                          "status": t.status, "extreme_rsi": round(t.extreme_rsi, 1),
+                          "detail": t.detail, "price": price, "bars_ago": ago})
+    return {"forms": out_forms, "traps": out_traps, "last_price": round(float(closes[-1]), 2)}
 
 
 class SizeReq(BaseModel):

@@ -132,7 +132,7 @@ function renderSnapshot(snap) {
   // ---- hero ----
   const d = readings.D;
   if (d) {
-    document.getElementById("heroSymbolLabel").textContent = `${snap.symbol} · DAILY`;
+    document.getElementById("heroSymbolLabel").textContent = `${snap.symbol} · Daily`;
     document.getElementById("heroPrice").textContent = "$" + d.price.toLocaleString(undefined, { maximumFractionDigits: 2 });
     const chg = ((d.price - d.open_price) / d.open_price) * 100;
     const chgEl = document.getElementById("heroChange");
@@ -148,12 +148,12 @@ function renderSnapshot(snap) {
   const down = frames.filter(tf => !readings[tf].above_45);
   const traps = frames.filter(tf => readings[tf].active_trap);
   let html = "";
-  if (down.length === 0) html += `<span class="pill up">${ICONS.trendUp}ĐỌC LÊN</span>Cả ${frames.length} khung đều có RSI <b>trên</b> đường WMA45.`;
-  else if (up.length === 0) html += `<span class="pill down">${ICONS.trendDown}ĐỌC XUỐNG</span>Cả ${frames.length} khung đều có RSI <b>dưới</b> đường WMA45.`;
-  else html += `<span class="pill mixed">${ICONS.warning}MÂU THUẪN</span>Lên: <b>${up.join(" ")}</b> · Xuống: <b>${down.join(" ")}</b> — mâu thuẫn rõ ràng thì vẫn chơi được, lưng chừng mới nên đứng ngoài (Bài 18).`;
+  if (down.length === 0) html += `<span class="pill up">${ICONS.trendUp}Đọc lên</span>Cả ${frames.length} khung đều có RSI <b>trên</b> đường WMA45.`;
+  else if (up.length === 0) html += `<span class="pill down">${ICONS.trendDown}Đọc xuống</span>Cả ${frames.length} khung đều có RSI <b>dưới</b> đường WMA45.`;
+  else html += `<span class="pill mixed">${ICONS.warning}Mâu thuẫn</span>Lên: <b>${up.join(" ")}</b> · Xuống: <b>${down.join(" ")}</b> — mâu thuẫn rõ ràng thì vẫn chơi được, lưng chừng mới nên đứng ngoài (Bài 18).`;
   if (traps.length) {
     const chi = traps.map(tf => `${tf} (${readings[tf].active_trap === "up" ? "lên" : "xuống"})`).join(", ");
-    html += `<br><span class="pill mixed" style="margin-top:8px">${ICONS.warning}TRAP</span>Chưa giải quyết ở <b>${chi}</b> — còn trap thì còn đọc theo chiều trap.`;
+    html += `<br><span class="pill mixed" style="margin-top:8px">${ICONS.warning}Trap</span>Chưa giải quyết ở <b>${chi}</b> — còn trap thì còn đọc theo chiều trap.`;
   }
   document.getElementById("summaryBanner").innerHTML = html;
 
@@ -181,11 +181,11 @@ function renderSnapshot(snap) {
     countdownTimers[tf] = r.next_close;
     const biasCls = nd.bias === "LEN" ? "up" : nd.bias === "XUONG" ? "down" : "cho";
     const biasIcon = nd.bias === "LEN" ? ICONS.trendUp : nd.bias === "XUONG" ? ICONS.trendDown : ICONS.pause;
-    const biasTxt = nd.bias === "LEN" ? "LÊN" : nd.bias === "XUONG" ? "XUỐNG" : "CHỜ";
+    const biasTxt = nd.bias === "LEN" ? "Lên" : nd.bias === "XUONG" ? "Xuống" : "Chờ";
     const bars = Array.from({ length: 6 }, (_, k) =>
       `<i class="${k < r.muc_luc ? "on " + lucTone(r.muc_luc) : ""}"></i>`).join("");
     const trapFlag = r.active_trap
-      ? `<span class="trap-flag" title="Trap chưa được giải quyết">${ICONS.warning}TRAP ${r.active_trap === "up" ? "LÊN" : "XUỐNG"}</span>` : "";
+      ? `<span class="trap-flag" title="Trap chưa được giải quyết">${ICONS.warning}Trap ${r.active_trap === "up" ? "lên" : "xuống"}</span>` : "";
     return `
       <tr class="row ${openRows.has(tf) ? "open" : ""}" data-tf="${tf}" tabindex="0" role="button" aria-expanded="${openRows.has(tf)}">
         <td>
@@ -271,10 +271,32 @@ async function loadSignals() {
   try {
     const res = await fetch(`${API}/api/signals?symbol=${symbol}&timeframe=${tf}`);
     const data = await res.json();
-    renderTimeline("formList", data.forms, f =>
-      `<span class="dot ${f.direction === "buy" ? "up" : "down"}"></span>Form ${f.direction === "buy" ? "BUY" : "SELL"} · RSI ${f.diem3_rsi}<time>${f.diem3_time.slice(0, 16).replace("T", " ")}</time>`);
-    renderTimeline("trapList", data.traps, t =>
-      `<span class="dot ${t.direction === "down" ? "down" : "up"}"></span>${t.direction === "down" ? "Xuống" : "Lên"} · ${t.status.replace(/_/g, " ")}<time>${t.start_time.slice(0, 10)}</time>`);
+    const now = data.last_price;
+    const ago = n => (n === 0 ? "nến này" : `${n} nến trước`);
+    const money = v => (v == null ? "—" : "$" + v.toLocaleString(undefined, { maximumFractionDigits: 0 }));
+    // % gia da chay ke tu tin hieu — de biet tin hieu con "moi" hay da di xa
+    const drift = p => {
+      if (p == null || !now) return "";
+      const d = ((now - p) / p) * 100;
+      return `<span class="drift ${d >= 0 ? "up" : "down"}">${d >= 0 ? "+" : ""}${d.toFixed(1)}%</span>`;
+    };
+
+    renderTimeline("formList", data.forms, f => `
+      <span class="dot ${f.direction === "buy" ? "up" : "down"}"></span>
+      <span class="sig-main">
+        <b>Form ${f.direction === "buy" ? "BUY" : "SELL"}</b>
+        <span class="sig-meta">RSI ${f.diem3_rsi} · ${money(f.price)} · ${ago(f.bars_ago)}</span>
+      </span>
+      ${drift(f.price)}
+      <time>${f.diem3_time.slice(0, 10)}</time>`);
+
+    renderTimeline("trapList", data.traps, t => `
+      <span class="dot ${t.direction === "down" ? "down" : "up"}"></span>
+      <span class="sig-main">
+        <b>Trap ${t.direction === "down" ? "xuống" : "lên"}</b>
+        <span class="sig-meta">${t.status.replace(/_/g, " ")} · RSI ${t.extreme_rsi} · ${ago(t.bars_ago)}</span>
+      </span>
+      <time>${t.start_time.slice(0, 10)}</time>`);
   } catch (e) { /* panel phu, khong chan luong chinh */ }
 }
 function renderTimeline(id, items, fmt) {
