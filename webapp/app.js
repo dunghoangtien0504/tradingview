@@ -12,6 +12,45 @@ const ICONS = {
   trash: `<svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V5a2 2 0 012-2h2a2 2 0 012 2v2m2 0v12a2 2 0 01-2 2H9a2 2 0 01-2-2V7h10z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
 };
 
+// -------------------------------------------------------- gauge & spark --
+function gaugeArcPath(cx, cy, r, startDeg, endDeg) {
+  const rad = d => (d * Math.PI) / 180;
+  const sx = cx + r * Math.cos(rad(startDeg)), sy = cy - r * Math.sin(rad(startDeg));
+  const ex = cx + r * Math.cos(rad(endDeg)), ey = cy - r * Math.sin(rad(endDeg));
+  const large = (startDeg - endDeg) > 180 ? 1 : 0;
+  return `M ${sx.toFixed(2)} ${sy.toFixed(2)} A ${r} ${r} 0 ${large} 1 ${ex.toFixed(2)} ${ey.toFixed(2)}`;
+}
+function lucColor(v6) {
+  return v6 <= 2 ? "var(--down)" : v6 === 3 || v6 === 4 ? "var(--warn)" : "var(--up)";
+}
+function radialGauge(value, max, size) {
+  const v = Math.max(0, Math.min(1, value / max));
+  const cx = size / 2, cy = size * 0.56, r = size * 0.40, sw = size * 0.12;
+  const bg = gaugeArcPath(cx, cy, r, 180, 0);
+  const fg = gaugeArcPath(cx, cy, r, 180, 180 - 180 * v);
+  const color = lucColor(value);
+  return `<svg viewBox="0 0 ${size} ${size * 0.62}" class="gauge" role="img" aria-label="Mức lực ${value}/${max}">
+      <path d="${bg}" fill="none" stroke="var(--surface-3)" stroke-width="${sw}" stroke-linecap="round"/>
+      <path d="${fg}" fill="none" stroke="${color}" stroke-width="${sw}" stroke-linecap="round"/>
+      <text x="${cx}" y="${cy - 1}" text-anchor="middle" class="gauge-num" fill="${color}">${value}</text>
+    </svg>`;
+}
+function sparkline(rsiArr, ema9Arr, wma45Arr, w, h) {
+  if (!rsiArr || rsiArr.length < 2) return "";
+  const all = [...rsiArr, ...ema9Arr, ...wma45Arr];
+  const min = Math.min(...all), max = Math.max(...all), range = (max - min) || 1;
+  const pts = arr => arr.map((v, i) => {
+    const x = (i / (arr.length - 1)) * w;
+    const y = h - ((v - min) / range) * (h - 4) - 2;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(" ");
+  return `<svg viewBox="0 0 ${w} ${h}" class="spark" preserveAspectRatio="none" aria-hidden="true">
+      <polyline points="${pts(wma45Arr)}" fill="none" stroke="var(--wma)" stroke-width="1.5" opacity=".8"/>
+      <polyline points="${pts(ema9Arr)}" fill="none" stroke="var(--warn)" stroke-width="1.5" opacity=".85"/>
+      <polyline points="${pts(rsiArr)}" fill="none" stroke="currentColor" stroke-width="2"/>
+    </svg>`;
+}
+
 // ------------------------------------------------------------- tab nav --
 document.querySelectorAll(".tab").forEach(btn => {
   btn.addEventListener("click", () => {
@@ -19,6 +58,7 @@ document.querySelectorAll(".tab").forEach(btn => {
     btn.classList.add("active"); btn.setAttribute("aria-selected", "true");
     document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
     document.getElementById(`panel-${btn.dataset.tab}`).classList.add("active");
+    window.scrollTo({ top: 0, behavior: "instant" });
   });
 });
 
@@ -78,6 +118,18 @@ function renderSnapshot(snap) {
   const readings = snap.readings || {};
   countdownTimers = {};
 
+  // --- hero ---
+  const d = readings.D;
+  if (d) {
+    document.getElementById("heroSymbolLabel").textContent = `${snap.symbol} · Daily`;
+    document.getElementById("heroPrice").textContent = "$" + d.price.toLocaleString(undefined, { maximumFractionDigits: 2 });
+    const chgPct = ((d.price - d.open_price) / d.open_price) * 100;
+    const chgEl = document.getElementById("heroChange");
+    chgEl.innerHTML = `${chgPct >= 0 ? ICONS.trendUp : ICONS.trendDown}<span>${chgPct >= 0 ? "+" : ""}${chgPct.toFixed(2)}% hôm nay</span>`;
+    chgEl.className = "hero-change " + (chgPct >= 0 ? "up" : "down");
+    document.getElementById("heroGauge").innerHTML = radialGauge(d.muc_luc, 6, 148);
+  }
+
   // --- summary sentence ---
   const up = ORDER.filter(tf => readings[tf]?.above_45);
   const down = ORDER.filter(tf => readings[tf] && !readings[tf].above_45);
@@ -117,21 +169,22 @@ function renderSnapshot(snap) {
       return;
     }
     prevAbove = r.above_45;
-    const trendIcon = r.above_45 ? ICONS.trendUp : ICONS.trendDown;
     const trendCls = r.above_45 ? "up" : "down";
-    const lucBars = Array.from({ length: 6 }, (_, k) => `<i class="${k < r.muc_luc ? "on" : ""}"></i>`).join("");
     const trapHtml = r.active_trap
       ? `<div class="tf-trap">${ICONS.warning}TRAP ${r.active_trap === "up" ? "LÊN" : "XUỐNG"}</div>`
-      : "";
+      : `<div class="tf-trap ghost">&nbsp;</div>`;
     countdownTimers[tf] = r.next_close;
+    cell.classList.add(trendCls === "up" ? "tone-up" : "tone-down");
     cell.innerHTML = `
       <div class="tf-head">
-        <span class="tf-name">${tf}</span>
-        <span class="tf-trend ${trendCls}">${trendIcon}</span>
+        <div>
+          <span class="tf-name">${tf}</span>
+          <span class="tf-label">${TF_LABEL[tf]}</span>
+        </div>
+        ${radialGauge(r.muc_luc, 6, 52)}
       </div>
-      <span class="tf-label">${TF_LABEL[tf]}</span>
       <span class="tf-rsi">${r.rsi.toFixed(1)}<small> RSI</small></span>
-      <div class="tf-luc" title="Mức lực ${r.muc_luc}/6">${lucBars}</div>
+      <div class="tf-spark ${trendCls}">${sparkline(r.rsi_series, r.ema9_series, r.wma45_series, 140, 34)}</div>
       ${trapHtml}
       <span class="tf-countdown" id="cd-wrap-${tf}">${ICONS.clock}<span id="cd-${tf}">${fmtCountdown(r.next_close)}</span></span>
     `;

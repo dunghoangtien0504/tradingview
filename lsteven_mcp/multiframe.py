@@ -21,6 +21,7 @@ class TFReading:
     timeframe: str
     last_close_time: str
     price: float
+    open_price: float
     rsi: float
     ema9: float
     wma45: float
@@ -29,9 +30,12 @@ class TFReading:
     imbalance_side: str | None
     imbalance_candles: int
     active_trap: str | None   # "down" | "up" | None
+    rsi_series: list[float] = None
+    ema9_series: list[float] = None
+    wma45_series: list[float] = None
 
 
-def read_timeframe(symbol: str, tf: str, limit: int = 300) -> tuple[pd.DataFrame, TFReading]:
+def read_timeframe(symbol: str, tf: str, limit: int = 300, sparkline_n: int = 24) -> tuple[pd.DataFrame, TFReading]:
     raw = get_klines(symbol, tf, limit=limit)
     df = ind.add_lines(raw)
     last = df.iloc[-1]
@@ -42,10 +46,12 @@ def read_timeframe(symbol: str, tf: str, limit: int = 300) -> tuple[pd.DataFrame
     if traps and traps[-1].status == "dang_dien_ra":
         active_trap = traps[-1].direction
 
+    tail = df.tail(sparkline_n)
     reading = TFReading(
         timeframe=tf,
         last_close_time=str(last["open_time"]),
         price=round(float(last["close"]), 2),
+        open_price=round(float(last["open"]), 2),
         rsi=round(float(last["rsi"]), 2),
         ema9=round(float(last["ema9"]), 2),
         wma45=round(float(last["wma45"]), 2),
@@ -54,6 +60,9 @@ def read_timeframe(symbol: str, tf: str, limit: int = 300) -> tuple[pd.DataFrame
         imbalance_side=imb["side"],
         imbalance_candles=imb["candles_on_side"],
         active_trap=active_trap,
+        rsi_series=[round(float(v), 2) for v in tail["rsi"]],
+        ema9_series=[round(float(v), 2) for v in tail["ema9"]],
+        wma45_series=[round(float(v), 2) for v in tail["wma45"]],
     )
     return df, reading
 

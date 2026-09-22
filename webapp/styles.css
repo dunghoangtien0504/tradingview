@@ -147,13 +147,45 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .pill.mixed{ background:var(--warn-bg); color:var(--warn); }
 .pill svg{ width:13px; height:13px; }
 
+/* --------------------------------------------------------- hero ------- */
+.hero{
+  position:relative; margin-top:20px; border-radius:var(--radius-lg); border:1px solid var(--border);
+  background:var(--surface); overflow:hidden; padding:26px 26px 20px;
+}
+.hero-glow{
+  position:absolute; top:-140px; right:-100px; width:420px; height:420px; border-radius:50%;
+  background:radial-gradient(circle, rgba(34,197,94,.16), transparent 70%);
+  pointer-events:none;
+}
+.hero-top{ position:relative; display:flex; justify-content:space-between; align-items:center; gap:20px; flex-wrap:wrap; }
+.hero-eyebrow{ font-family:var(--font-mono); font-size:12px; color:var(--ink-faint); letter-spacing:.04em; }
+.hero-price{
+  font-family:var(--font-mono); font-size:44px; font-weight:600; letter-spacing:-0.01em;
+  margin-top:4px; font-variant-numeric:tabular-nums;
+}
+.hero-change{ display:inline-flex; align-items:center; gap:6px; font-size:14px; font-weight:600; margin-top:6px; }
+.hero-change svg{ width:16px; height:16px; }
+.hero-change.up{ color:var(--up); }
+.hero-change.down{ color:var(--down); }
+.hero-gauge-block{ display:flex; flex-direction:column; align-items:center; gap:2px; }
+.gauge-wrap{ width:148px; }
+.gauge{ width:100%; height:auto; overflow:visible; }
+.gauge-num{ font-family:var(--font-mono); font-size:22px; font-weight:700; }
+.hero-gauge-label{ font-size:11.5px; color:var(--ink-faint); font-weight:600; }
+.hero .summary-banner{
+  position:relative; margin-top:22px; background:var(--surface-2); border-color:var(--border);
+}
+
 /* ------------------------------------------------------ tf strip ------ */
 .tf-strip{ display:flex; align-items:stretch; gap:0; overflow-x:auto; padding-bottom:4px; }
 .tf-cell{
-  flex:1 1 0; min-width:118px; background:var(--surface); border:1px solid var(--border);
-  border-radius:var(--radius); padding:14px 12px; position:relative;
-  display:flex; flex-direction:column; gap:8px; animation: fadeUp .4s ease both;
+  flex:1 1 0; min-width:150px; background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:14px 14px 12px; position:relative;
+  display:flex; flex-direction:column; gap:6px; animation: fadeUp .4s ease both;
+  border-top-width:3px; transition:border-color .2s;
 }
+.tf-cell.tone-up{ border-top-color:var(--up); }
+.tf-cell.tone-down{ border-top-color:var(--down); }
 .tf-connector{
   flex:0 0 22px; align-self:center; height:2px; position:relative; top:0;
   background: var(--border);
@@ -161,36 +193,43 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .tf-connector.dong-thuan{ background: var(--up); }
 .tf-connector.lech{ background: var(--down); }
 
-.tf-head{ display:flex; align-items:center; justify-content:space-between; }
-.tf-name{ font-weight:700; font-size:13.5px; }
+.tf-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:6px; }
+.tf-head .gauge{ width:44px; flex:none; }
+.tf-head .gauge-num{ font-size:13px; }
+.tf-name{ font-weight:700; font-size:14px; display:block; }
 .tf-label{ font-size:10.5px; color:var(--ink-faint); }
-.tf-trend{ width:18px; height:18px; flex:none; }
-.tf-trend.up{ color:var(--up); }
-.tf-trend.down{ color:var(--down); }
 
-.tf-rsi{ font-family:var(--font-mono); font-size:20px; font-weight:600; font-variant-numeric:tabular-nums; }
+.tf-rsi{ font-family:var(--font-mono); font-size:22px; font-weight:600; font-variant-numeric:tabular-nums; }
 .tf-rsi small{ font-size:11px; color:var(--ink-faint); font-weight:400; }
 
-.tf-luc{ display:flex; gap:3px; }
-.tf-luc i{ flex:1; height:5px; border-radius:3px; background:var(--surface-3); }
-.tf-luc i.on{ background:var(--up); }
+.tf-spark{ height:34px; margin:2px 0; }
+.tf-spark.up{ color:var(--up); }
+.tf-spark.down{ color:var(--down); }
+.tf-spark .spark{ width:100%; height:100%; display:block; }
 
 .tf-trap{
   display:flex; align-items:center; gap:5px; font-size:11px; font-weight:600; color:var(--warn);
   background:var(--warn-bg); border-radius:6px; padding:3px 7px; width:fit-content;
 }
 .tf-trap svg{ width:12px; height:12px; animation: pulse 1.8s ease-in-out infinite; }
+.tf-trap.ghost{ background:none; padding:3px 0; }
 @keyframes pulse{ 0%,100%{opacity:1} 50%{opacity:.45} }
 
 .tf-countdown{
-  margin-top:auto; font-family:var(--font-mono); font-size:11px; color:var(--ink-faint);
+  margin-top:auto; padding-top:6px; border-top:1px dashed var(--border); font-family:var(--font-mono); font-size:11px; color:var(--ink-faint);
   display:flex; align-items:center; gap:5px; font-variant-numeric:tabular-nums;
 }
 .tf-countdown svg{ width:11px; height:11px; }
 
 @media (max-width: 900px){
   .tf-strip{ flex-wrap:nowrap; }
-  .tf-cell{ min-width:132px; }
+  .tf-cell{ min-width:150px; }
+  .hero-price{ font-size:34px; }
+}
+@media (max-width:640px){
+  .hero{ padding:20px 18px 16px; }
+  .hero-top{ flex-direction:column; align-items:flex-start; }
+  .hero-gauge-block{ align-self:center; }
 }
 
 /* -------------------------------------------------------- cards ------- */
