@@ -6,3 +6,6 @@ venv/
 build/
 dist/
 .env
+alert_state.json
+*.csv
+backtest_results/
