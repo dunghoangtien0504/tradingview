@@ -127,6 +127,51 @@ def check_dong_thuan(symbol: str, tf_a: str, tf_b: str) -> dict:
     }
 
 
+@mcp.tool()
+def plan_position_size(equity_usd: float, entry_price: float, stop_loss_price: float,
+                        risk_pct: float = 2.0) -> dict:
+    """Cong thuc khoi luong Bai 17 — PHAN DUY NHAT cua phuong phap co the may
+    moc 100%, vi day la mot dinh nghia so, khong phai doc chart co doan chia:
+
+        % khoang SL = |entry - SL| / entry
+        khoi luong toi da (USD) = (equity * risk_pct%) / (% khoang SL)
+
+    Day chi la MAY TINH — no khong doc chart, khong kiem tra xem entry/SL co
+    hop ly theo Form/Trap hay khong. Ban tu chon entry/SL tu cac tool doc
+    chart khac, tool nay chi lam dung mot viec: quy ra khoi luong dung 2%.
+
+    Args:
+        equity_usd: so du (hoac equity dang gong) tinh bang USD.
+        entry_price: gia du kien vao.
+        stop_loss_price: gia du kien dat dung lo.
+        risk_pct: % toi da duoc mat cho KE HOACH nay (Bai 17: mac dinh 2%,
+            khong phai moi lenh — neu ke hoach da co lenh khac dang mo, tru
+            phan da dung truoc khi goi tool nay).
+    """
+    if equity_usd <= 0 or entry_price <= 0 or stop_loss_price <= 0:
+        return {"error": "equity_usd, entry_price, stop_loss_price phai > 0"}
+    if entry_price == stop_loss_price:
+        return {"error": "entry_price va stop_loss_price khong duoc bang nhau"}
+
+    sl_pct = abs(entry_price - stop_loss_price) / entry_price
+    risk_usd = equity_usd * (risk_pct / 100.0)
+    max_position_usd = risk_usd / sl_pct
+    direction = "long (mua)" if stop_loss_price < entry_price else "short (ban)"
+
+    return {
+        "direction": direction,
+        "sl_khoang_cach_pct": round(sl_pct * 100, 3),
+        "so_tien_cho_phep_mat_usd": round(risk_usd, 2),
+        "khoi_luong_toi_da_usd": round(max_position_usd, 2),
+        "vi_du_vao_30_phan_tram": round(max_position_usd * 0.30, 2),
+        "canh_bao": (
+            "Day la muc TOI DA cho phep boi cong thuc 2% — khong phai muc nen vao. "
+            "Bai 15: build dan tu khung nho len lon, moi khung mot phan cua muc toi da nay. "
+            "Bai 17: TUYET DOI KHONG noi rong SL sau khi da vao."
+        ),
+    }
+
+
 @mcp.resource("lsteven://timeframes")
 def timeframes_resource() -> str:
     """The fixed timeframe set the method reads, and their Binance intervals."""

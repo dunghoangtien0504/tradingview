@@ -36,6 +36,7 @@ Thêm vào `.mcp.json` ở gốc project (đã có sẵn file mẫu, xem `../.mc
 | `detect_form_events(symbol, timeframe, lookback)` | Các form buy/sell gần đây, kèm điểm 1-2-3 | Bài 4 |
 | `detect_trap_events(symbol, timeframe, lookback)` | Các đợt Trap gần đây và cách kết thúc | Bài 10-11 |
 | `check_dong_thuan(symbol, tf_a, tf_b)` | So sánh nhanh 2 khung bất kỳ có đồng thuận không | Bài 8 |
+| `plan_position_size(equity, entry, sl, risk_pct)` | Tính khối lượng tối đa đúng công thức 2% — phần duy nhất trong phương pháp có công thức số 100%, an toàn để máy móc hoá | Bài 17 |
 
 ## Giới hạn cần biết (đọc trước khi tin số)
 
