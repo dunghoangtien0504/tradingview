@@ -89,3 +89,55 @@ def get_klines(symbol: str, tf_key: str, limit: int = 300) -> pd.DataFrame:
 
     _CACHE[key] = _CacheEntry(at=time.time(), df=df)
     return df
+
+
+def get_klines_extended(symbol: str, tf_key: str, start: str, end: str | None = None) -> pd.DataFrame:
+    """Paginated fetch for backtesting — Binance caps a single request to
+    1000 candles, so this loops. `start`/`end` are anything pandas.Timestamp
+    understands (e.g. "2019-01-01"). Not cached (backtests call this once
+    per run, not per tool call, so the 30s TTL cache is the wrong tool here).
+    """
+    tf_key = tf_key.upper()
+    if tf_key not in TIMEFRAMES:
+        raise DataError(f"unknown timeframe {tf_key!r}; use one of {list(TIMEFRAMES)}")
+    interval = TIMEFRAMES[tf_key]
+
+    start_ms = int(pd.Timestamp(start).timestamp() * 1000)
+    end_ms = int(pd.Timestamp(end).timestamp() * 1000) if end else int(time.time() * 1000)
+
+    rows: list = []
+    cur = start_ms
+    while cur < end_ms:
+        try:
+            r = requests.get(
+                BINANCE_BASE,
+                params={"symbol": symbol.upper(), "interval": interval,
+                        "startTime": cur, "endTime": end_ms, "limit": 1000},
+                timeout=20,
+            )
+            r.raise_for_status()
+            batch = r.json()
+        except requests.RequestException as e:
+            raise DataError(f"Binance request failed for {symbol} {tf_key}: {e}") from e
+        if isinstance(batch, dict) and batch.get("code"):
+            raise DataError(f"Binance error for {symbol} {tf_key}: {batch}")
+        if not batch:
+            break
+        rows.extend(batch)
+        last_open = batch[-1][0]
+        if last_open <= cur:
+            break
+        cur = last_open + 1
+        if len(batch) < 1000:
+            break
+
+    if not rows:
+        raise DataError(f"Binance returned no candles for {symbol} {tf_key} in range")
+
+    df = pd.DataFrame(rows, columns=_KLINE_COLS)
+    df["open_time"] = pd.to_datetime(df["open_time"], unit="ms", utc=True)
+    for c in ("open", "high", "low", "close", "volume"):
+        df[c] = df[c].astype(float)
+    df = (df[["open_time", "open", "high", "low", "close", "volume"]]
+          .drop_duplicates("open_time").reset_index(drop=True))
+    return df

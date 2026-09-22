@@ -86,11 +86,36 @@ Xoá lịch: `schtasks /delete /tn "LSteven Alert Bot" /f`
 
 State (những gì bot "đã thấy") lưu ở `alert_state.json`, không commit lên git.
 
+## Backtest (Lớp 3 — đo tập luật, không phải bot)
+
+**Tập luật rút gọn** (không phải toàn bộ phương pháp — xem cảnh báo bên dưới): vào khi Form điểm 3 hoàn thành (mở cửa nến kế tiếp, đúng Bài 14), SL = đáy/đỉnh thấp/cao nhất N nến trước đó, khối lượng đúng công thức 2% Bài 17 (tính lại theo equity mỗi lệnh), ra khi có tín hiệu đảo chiều hoặc dính SL, không take-profit (Bài 16).
+
+```bash
+python -m lsteven_mcp.backtest --symbol BTCUSDT --timeframe D --start 2019-01-01 --direction long_only --csv trades.csv
+```
+
+Kết quả thật đã chạy (BTCUSDT, 01/2019 – 09/2026, vốn 1000 USD, rủi ro 2%/lệnh):
+
+| Khung | Số lệnh | Winrate | R trung bình | Vốn cuối | Buy&Hold cùng kỳ | Max drawdown |
+|---|---|---|---|---|---|---|
+| **W** (long only) | 13 | 53.8% | **+0.96R** | 1.261 | 2.374% | **4.3%** |
+| **D** (long only) | 140 | 34.3% | +0.30R | 2.176 (+117.6%) | 2.165% | 8.2% |
+| **D** (long+short) | 152 | 30.3% | +0.14R | 1.459 (+45.9%) | 2.165% | 26.3% |
+| **H4** (long only, từ 2023) | 416 | 26.9% | +0.10R | 1.796 (+79.6%) | 420% | 32.7% |
+
+**Đọc kết quả này thế nào:**
+- R trung bình **dương ở mọi khung** dù winrate chỉ 27–54% — đúng tinh thần "thắng ít nhưng ăn nhiều, thua nhiều nhưng lỗ ít" (Bài 19), kể cả với tập luật đã rút gọn tới mức tối thiểu.
+- Khung càng lớn, **winrate và chất lượng R càng cao, drawdown càng thấp** (W: 4.3% · D: 8.2% · H4: 32.7%) — khớp chính xác lời dặn Bài 18 "lờ tín hiệu sóng bé, kéo kỷ luật lên từ H4 trở lên". H4 gần 3 năm 416 lệnh mà lãi ròng chỉ hơn 1 nửa so với D 140 lệnh trong 7.7 năm — nhiễu nhiều, chất lượng thấp.
+- **Thua xa Buy & Hold** — đừng hiểu lầm đây là "phương pháp dở hơn giữ coin". Giai đoạn 2019–2026 BTC tăng ~21 lần, bất kỳ hệ thống nào ra/vào theo tín hiệu (không cầm xuyên suốt) đều thua hold trong một con bull run mạnh. Cái tập luật này đổi lấy là **drawdown thấp hơn nhiều lần** (8% so với ~80% của việc cầm BTC xuyên qua 2018/2022) — đánh đổi giữa lợi nhuận và biên độ chịu đựng tâm lý, đúng khái niệm Bài 17.
+- **13 lệnh trên Weekly là mẫu quá nhỏ** để tin tuyệt đối (R=0.96 đẹp nhưng có thể may mắn) — cần chạy trên nhiều symbol/giai đoạn hơn trước khi kết luận.
+
+⚠️ **Đây KHÔNG phải bằng chứng phương pháp LSteven "work"** — tập luật này chỉ dùng 1 khung, 1 loại tín hiệu (Form), bỏ hoàn toàn phần cốt lõi thật sự của phương pháp: đọc đa khung đồng thời, bồi lệnh theo đồng thuận, xa/gần, và discretion của người trade. Coi đây là **sàn tối thiểu** (nếu phần máy móc hoá được đã dương kỳ vọng, phần discretion làm đúng sẽ còn tốt hơn), không phải trần.
+
 ## Roadmap
 
 - ✅ Lớp 1 — đọc chart qua MCP tool.
-- ✅ Lớp 2 — cảnh báo Telegram (ở trên).
-- ⏭ Lớp 3 — backtest cơ học hoá tập luật đơn giản trên dữ liệu lịch sử (đang làm).
+- ✅ Lớp 2 — cảnh báo Telegram.
+- ✅ Lớp 3 — backtest tập luật rút gọn (ở trên).
 - ⏭ Lớp 4 — paper trading / testnet.
 - ⛔ Lớp 5 — đặt lệnh tiền thật: **không tự động hoá bởi AI**, nếu làm thì người dùng tự vận hành với API key của chính mình.
 
