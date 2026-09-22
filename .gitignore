@@ -9,3 +9,5 @@ dist/
 alert_state.json
 *.csv
 backtest_results/
+journal.db
+.streamlit/

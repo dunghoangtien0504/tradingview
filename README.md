@@ -111,12 +111,28 @@ Kết quả thật đã chạy (BTCUSDT, 01/2019 – 09/2026, vốn 1000 USD, r�
 
 ⚠️ **Đây KHÔNG phải bằng chứng phương pháp LSteven "work"** — tập luật này chỉ dùng 1 khung, 1 loại tín hiệu (Form), bỏ hoàn toàn phần cốt lõi thật sự của phương pháp: đọc đa khung đồng thời, bồi lệnh theo đồng thuận, xa/gần, và discretion của người trade. Coi đây là **sàn tối thiểu** (nếu phần máy móc hoá được đã dương kỳ vọng, phần discretion làm đúng sẽ còn tốt hơn), không phải trần.
 
+## Dashboard + Nhật ký (Streamlit — chạy local trên máy bạn)
+
+Giao diện web bọc quanh toàn bộ lõi trên: dải 7 khung đọc nhanh, bảng đồng thuận, tín hiệu form/trap gần nhất, máy tính khối lượng 2%, và nhật ký giao dịch (SQLite, lưu tại `journal.db`, không commit).
+
+```bash
+cd lsteven-mcp
+pip install -e .
+streamlit run streamlit_app.py
+```
+
+Mở tự động tại `http://localhost:8501`. Chỉ chạy trên máy bạn — không có bước deploy nào, không cần mật khẩu, dữ liệu nhật ký nằm hoàn toàn local.
+
+Đã test bằng tay toàn bộ luồng: xem snapshot thật (BTCUSDT), thêm/sửa trạng thái/xoá một lệnh trong nhật ký — hoạt động đúng.
+
 ## Roadmap
 
 - ✅ Lớp 1 — đọc chart qua MCP tool.
 - ✅ Lớp 2 — cảnh báo Telegram.
-- ✅ Lớp 3 — backtest tập luật rút gọn (ở trên).
+- ✅ Lớp 3 — backtest tập luật rút gọn.
+- ✅ Dashboard + Nhật ký — Streamlit local (ở trên).
 - ⏭ Lớp 4 — paper trading / testnet.
+- ⏭ Deploy dashboard lên cloud để xem từ điện thoại (khi thấy dùng hàng ngày thật sự).
 - ⛔ Lớp 5 — đặt lệnh tiền thật: **không tự động hoá bởi AI**, nếu làm thì người dùng tự vận hành với API key của chính mình.
 
 Lõi đọc (`indicators.py`, `form_trap.py`, `multiframe.py`) không phụ thuộc gì vào MCP hay Telegram — import thẳng được vào một FastAPI app để làm dashboard realtime khi cần.

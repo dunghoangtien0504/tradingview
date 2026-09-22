@@ -16,6 +16,7 @@ from . import indicators as ind
 from .data import TIMEFRAMES, DataError, get_klines
 from .form_trap import detect_forms, detect_traps
 from .multiframe import ORDER, read_timeframe, snapshot
+from .risk import position_size
 
 mcp = FastMCP(
     name="LSteven Trading Reader",
@@ -148,22 +149,11 @@ def plan_position_size(equity_usd: float, entry_price: float, stop_loss_price: f
             khong phai moi lenh — neu ke hoach da co lenh khac dang mo, tru
             phan da dung truoc khi goi tool nay).
     """
-    if equity_usd <= 0 or entry_price <= 0 or stop_loss_price <= 0:
-        return {"error": "equity_usd, entry_price, stop_loss_price phai > 0"}
-    if entry_price == stop_loss_price:
-        return {"error": "entry_price va stop_loss_price khong duoc bang nhau"}
-
-    sl_pct = abs(entry_price - stop_loss_price) / entry_price
-    risk_usd = equity_usd * (risk_pct / 100.0)
-    max_position_usd = risk_usd / sl_pct
-    direction = "long (mua)" if stop_loss_price < entry_price else "short (ban)"
-
+    result = position_size(equity_usd, entry_price, stop_loss_price, risk_pct)
+    if "error" in result:
+        return result
     return {
-        "direction": direction,
-        "sl_khoang_cach_pct": round(sl_pct * 100, 3),
-        "so_tien_cho_phep_mat_usd": round(risk_usd, 2),
-        "khoi_luong_toi_da_usd": round(max_position_usd, 2),
-        "vi_du_vao_30_phan_tram": round(max_position_usd * 0.30, 2),
+        **result,
         "canh_bao": (
             "Day la muc TOI DA cho phep boi cong thuc 2% — khong phai muc nen vao. "
             "Bai 15: build dan tu khung nho len lon, moi khung mot phan cua muc toi da nay. "
