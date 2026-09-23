@@ -24,10 +24,14 @@ CANONICAL = {"H1", "H4", "H12", "D", "3D", "W", "M"}
 
 # Frames Binance serves natively.
 TIMEFRAMES: dict[str, str] = {
+    "M5": "5m",
+    "M15": "15m",
+    "M30": "30m",
     "H1": "1h",
     "H2": "2h",
     "H4": "4h",
     "H6": "6h",
+    "H8": "8h",
     "H12": "12h",
     "D": "1d",
     "3D": "3d",

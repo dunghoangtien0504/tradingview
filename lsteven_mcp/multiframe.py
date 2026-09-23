@@ -17,7 +17,11 @@ from .form_trap import detect_traps
 
 # Large -> small, the order Bai 20 buoc 1 reads a plan in. The 7 frames in
 # CANONICAL are the method's own set; the rest are user-added extras.
-ORDER = ["M", "W", "4D", "3D", "2D", "D", "H12", "H6", "H4", "H3", "H2", "H1"]
+# M5/M15/M30 sit below Bai 18's own floor ("dung dung song be nhu H1/M15 de
+# giu ky luat tu H4 tro len") — kept opt-in for the grouped "Tong hop" table,
+# flagged loudly in the UI rather than silently blended into the main matrix.
+ORDER = ["M", "W", "4D", "3D", "2D", "D", "H12", "H8", "H6", "H4", "H3", "H2", "H1",
+         "M30", "M15", "M5"]
 
 
 @dataclass
@@ -93,9 +97,9 @@ def snapshot(symbol: str = "BTCUSDT") -> dict:
         except Exception as e:  # keep going even if one timeframe's fetch fails
             return tf, None, str(e)
 
-    # 12 frames sequentially would mean 12+ round trips to Binance per refresh;
+    # 16 frames sequentially would mean 16+ round trips to Binance per refresh;
     # fan them out so a snapshot stays snappy.
-    with ThreadPoolExecutor(max_workers=6) as pool:
+    with ThreadPoolExecutor(max_workers=8) as pool:
         for tf, r, err in pool.map(_one, ORDER):
             if err:
                 errors[tf] = err

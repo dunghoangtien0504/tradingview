@@ -5,6 +5,7 @@ Chay:  uvicorn api:app --reload --port 8787
 from __future__ import annotations
 
 import math
+from dataclasses import asdict
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -20,6 +21,7 @@ from lsteven_mcp.form_trap import detect_forms, detect_traps
 from lsteven_mcp.indicators import add_lines
 from lsteven_mcp.multiframe import ORDER, snapshot as mf_snapshot
 from lsteven_mcp.risk import position_size
+from lsteven_mcp.tonghop import tong_hop
 
 app = FastAPI(title="LSteven Cockpit API")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
@@ -28,8 +30,9 @@ STATIC_DIR = Path(__file__).resolve().parent / "webapp"
 
 # Khung -> do dai 1 nen, dung de tinh dem nguoc toi luc dong nen tiep theo.
 _TF_SECONDS = {
+    "M5": 5 * 60, "M15": 15 * 60, "M30": 30 * 60,
     "H1": 3600, "H2": 2 * 3600, "H3": 3 * 3600, "H4": 4 * 3600,
-    "H6": 6 * 3600, "H12": 12 * 3600,
+    "H6": 6 * 3600, "H8": 8 * 3600, "H12": 12 * 3600,
     "D": 24 * 3600, "2D": 2 * 24 * 3600, "3D": 3 * 24 * 3600, "4D": 4 * 24 * 3600,
     "W": 7 * 24 * 3600,
     "M": None,  # thang khong co do dai co dinh, xu ly rieng
@@ -71,6 +74,13 @@ def api_snapshot(symbol: str = "BTCUSDT"):
     snap = mf_snapshot(symbol)
     for tf, r in snap["readings"].items():
         r["next_close"] = _next_close(tf, r["last_close_time"])
+    th = tong_hop(snap["readings"])
+    snap["tong_hop"] = {
+        "nhom": {k: asdict(v) for k, v in th.nhom.items()},
+        "khuyen_nghi": th.khuyen_nghi,
+        "huong_de_xuat": th.huong_de_xuat,
+        "bullets": th.bullets,
+    }
     snap["server_time"] = datetime.now(timezone.utc).isoformat()
     return snap
 

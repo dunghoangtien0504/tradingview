@@ -5,9 +5,13 @@ const API = "";
 
 const TF_LABEL = {
   M: "Tháng", W: "Tuần", "4D": "4 Ngày", "3D": "3 Ngày", "2D": "2 Ngày", D: "Ngày",
-  H12: "12 giờ", H6: "6 giờ", H4: "4 giờ", H3: "3 giờ", H2: "2 giờ", H1: "1 giờ",
+  H12: "12 giờ", H8: "8 giờ", H6: "6 giờ", H4: "4 giờ", H3: "3 giờ", H2: "2 giờ", H1: "1 giờ",
+  M30: "30 phút", M15: "15 phút", M5: "5 phút",
 };
-const ORDER = ["M", "W", "4D", "3D", "2D", "D", "H12", "H6", "H4", "H3", "H2", "H1"];
+const ORDER = ["M", "W", "4D", "3D", "2D", "D", "H12", "H8", "H6", "H4", "H3", "H2", "H1",
+               "M30", "M15", "M5"];
+const NHOM_LABEL = { lon: "Khung lớn (hướng)", trung: "Khung trung", nho: "Khung nhỏ (thời điểm)" };
+const TRANG_THAI_LABEL = { len: "LÊN", xuong: "XUỐNG", giua: "giữa" };
 
 const ICONS = {
   trendUp: `<svg viewBox="0 0 24 24" fill="none"><path d="M3 17l6-6 4 4 8-8M21 7v6M21 7h-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
@@ -241,10 +245,63 @@ function renderSnapshot(snap) {
     });
   });
 
+  renderTongHop(snap.tong_hop);
+
   const entryField = document.getElementById("calcEntry");
   if (!entryField.dataset.touched && d) entryField.value = d.price;
   runCalc();
   updateAgoLabel();
+}
+
+// -------------------------------------------------------- tong hop nhom --
+function renderTongHop(th) {
+  if (!th) return;
+
+  // ---- 3 bang nhom (Lon / Trung / Nho) ----
+  const grid = document.getElementById("nhomGrid");
+  grid.innerHTML = ["lon", "trung", "nho"].map(key => {
+    const g = th.nhom[key];
+    const rows = g.rows.map(r => `
+      <tr>
+        <td>
+          <span class="tf-code">${r.timeframe}</span>
+          ${r.canonical ? "" : `<span class="tf-extra">mở rộng</span>`}
+        </td>
+        <td class="num mono">${r.rsi.toFixed(1)}</td>
+        <td class="num mono hide-sm">${r.ema9.toFixed(1)}</td>
+        <td class="num mono hide-sm">${r.wma45.toFixed(1)}</td>
+        <td><span class="nhom-state ${r.trang_thai}">${TRANG_THAI_LABEL[r.trang_thai]}</span></td>
+      </tr>`).join("");
+    const warn = key === "nho"
+      ? `<p class="nhom-warn">${ICONS.warning}M30/M15/M5 nằm dưới sàn Bài 18 khuyến nghị — chỉ dùng để canh thời điểm, không tự quyết định hướng.</p>`
+      : "";
+    return `
+      <div class="nhom-card">
+        <div class="nhom-head">
+          <h3>${NHOM_LABEL[key]}</h3>
+          <span class="nhom-badge ${g.trang_thai}">${TRANG_THAI_LABEL[g.trang_thai]}</span>
+        </div>
+        <table class="nhom-table">
+          <thead><tr><th>Khung</th><th class="num">RSI</th><th class="num hide-sm">EMA9</th><th class="num hide-sm">WMA45</th><th>Đọc</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+        ${warn}
+      </div>`;
+  }).join("");
+
+  // ---- tong hop & ke hoach ----
+  document.getElementById("tongHopGroups").innerHTML = ["lon", "trung", "nho"].map(key => {
+    const g = th.nhom[key];
+    return `<span class="tonghop-chip ${g.trang_thai}">${NHOM_LABEL[key].replace(" (hướng)", "").replace(" (thời điểm)", "")}: <b>${TRANG_THAI_LABEL[g.trang_thai]}</b></span>`;
+  }).join("");
+
+  const verdictCls = th.huong_de_xuat === "LEN" ? "up" : th.huong_de_xuat === "XUONG" ? "down" : "cho";
+  const verdictIcon = th.huong_de_xuat === "LEN" ? ICONS.trendUp : th.huong_de_xuat === "XUONG" ? ICONS.trendDown : ICONS.pause;
+  document.getElementById("tongHopVerdict").innerHTML =
+    `<span class="pill ${verdictCls}">${verdictIcon}${th.khuyen_nghi}</span>`;
+
+  document.getElementById("tongHopBullets").innerHTML =
+    (th.bullets || []).map(b => `<li>${b}</li>`).join("");
 }
 
 function listOrEmpty(arr) {

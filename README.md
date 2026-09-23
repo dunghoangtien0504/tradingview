@@ -54,6 +54,14 @@ Mỗi khung có một khối nhận định gồm: **đọc lên/xuống/chờ**
 
 Binance **không** phục vụ 3 khung này (`Invalid interval`), nên chúng được ghép từ nến 1h/1D. Mốc chia nến neo theo epoch bằng phép chia nguyên — không dùng `resample(origin=...)` của pandas vì tham số đó bị bỏ qua với rule theo ngày, khiến biên nến trôi theo lượng dữ liệu tải về. Đã đối chiếu: nến 2D tự ghép khớp chính xác OHLC của 2 nến D gốc.
 
+## Tổng hợp theo nhóm khung (`tonghop.py`)
+
+Dashboard có thêm một bảng gộp 16 khung thành 3 nhóm — **Khung lớn** (M, W, 4D, 3D, 2D, D), **Khung trung** (H12, H8, H6, H4, H3, H2, H1), **Khung nhỏ** (M30, M15, M5) — mỗi khung được gán nhanh **LÊN / XUỐNG / giữa**: RSI nằm cùng phía cả EMA9 lẫn WMA45 thì rõ hướng, còn nằm *giữa* hai đường (đã cắt một, chưa cắt đường kia) thì là "giữa" — đúng khái niệm "điểm 2" của Bài 4, chưa phải form đã xác nhận.
+
+Từ 3 nhóm đó, mục **Tổng hợp & kế hoạch** tự sinh một khuyến nghị + vài dòng lý do theo đúng logic đồng thuận đa khung của Bài 6/8/18 (không bịa quy tắc mới): cả 3 nhóm cùng chiều thì đi theo chiều đó; khung lớn+trung cùng chiều nhưng khung nhỏ ngược lại thì cảnh báo *hồi kỹ thuật, không phải đảo chiều* và chỉ ra điều kiện mới được đảo; khung lớn/trung mâu thuẫn nhau hoặc còn "giữa" thì khuyến nghị đứng ngoài. Vẫn **không phải dự báo giá** — chỉ là gộp cách đọc, lệnh cụ thể vẫn chờ form/trap xác nhận đúng khung định vào (Bài 20).
+
+⚠️ M30/M15/M5 nằm dưới sàn mà Bài 18 khuyến nghị ("lờ tín hiệu sóng bé như H1/M15 để giữ kỷ luật từ H4 trở lên") — dashboard vẫn hiển thị để canh thời điểm vào/thoát trong một kế hoạch đã được khung lớn+trung xác nhận, nhưng cố tình **không** để nhóm Nhỏ tự quyết định hướng trong logic tổng hợp ở trên.
+
 ## Bot cảnh báo Telegram (Lớp 2 — thuần đọc, không đặt lệnh)
 
 Chạy định kỳ, so với lần chạy trước, **chỉ nhắn khi có gì thật sự mới**: một con Trap vừa trả xong (thành công/không thành công/hỏng), một Form vừa hoàn thành điểm 3, hoặc đồng thuận giữa 2 khung liền kề vừa đổi phe. Mặc định theo dõi `H4 · H12 · D · 3D · W` (bỏ H1 và M — Bài 18 dặn "lờ tín hiệu sóng bé như H1/M15 để giữ kỷ luật từ H4 trở lên", còn M quá thưa để cảnh báo).
