@@ -11,3 +11,4 @@ alert_state.json
 backtest_results/
 journal.db
 .streamlit/
+server.log

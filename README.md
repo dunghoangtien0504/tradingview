@@ -139,6 +139,29 @@ File giao diện: `webapp/index.html`, `webapp/styles.css`, `webapp/app.js` — 
 
 Bản Streamlit cũ (`streamlit_app.py`) vẫn còn trong repo, hoạt động độc lập nếu muốn dùng, nhưng dashboard trên là bản chính giờ.
 
+### Chạy nền, không phụ thuộc phiên Claude Code
+
+Lệnh `uvicorn api:app --reload` ở trên chỉ sống trong terminal đang mở nó — đóng terminal (hoặc đóng phiên Claude Code nếu là Claude chạy nó để test) là mất kết nối, giao diện báo "Lỗi lấy dữ liệu: Failed to fetch". Để nó tự chạy mỗi khi bạn đăng nhập Windows, không cần giữ cửa sổ nào mở:
+
+```bash
+cd lsteven-mcp
+python serve_background.py   # test thu, xem no chay dung khong (Ctrl+C de dung)
+```
+
+Chạy ổn thì đăng ký tự khởi động — sao chép launcher vào thư mục Startup của Windows (không cần quyền admin, không cần Task Scheduler):
+
+```powershell
+Copy-Item "run_server_template.bat" "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup\LSteven Cockpit.bat"
+```
+
+Từ lần đăng nhập sau, `pythonw.exe` (không cửa sổ console) sẽ tự chạy `serve_background.py` ở nền. Log ghi ra `server.log` trong thư mục này — mở file đó khi cần tra lỗi. Muốn tắt: mở Task Manager, tìm tiến trình `pythonw.exe` ứng với `serve_background.py`, kết thúc nó; hoặc xoá file `.bat` khỏi thư mục Startup để không tự chạy lần sau.
+
+**Kiểm tra server có đang sống không** (từ PowerShell bất kỳ lúc nào):
+```powershell
+Get-Process pythonw -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "*python*" }
+```
+hoặc đơn giản mở `http://localhost:8787` — không vào được là server đã chết, chạy lại `python serve_background.py`.
+
 ## Roadmap
 
 - ✅ Lớp 1 — đọc chart qua MCP tool.
